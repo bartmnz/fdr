@@ -27,14 +27,16 @@ class Make_server(threading.Thread):
 
     def stop(self):
         self.quit_flag = True
-        
+
     def run(self):
         while(not self.quit_flag):
             self.recv_data, addr = self.server_socket.recvfrom(256)
+            self.recv_data = str(self.recv_data, 'utf-8')
 #            TODO if recv_data is a valid string -- do whatever
             self.parse_input()
-            if self.rvalue:
-                self.server_socket.sendto(hex(self.rValue), addr)
+            if self.rValue:
+                self.rValue = str(hex(self.rValue))
+                self.server_socket.sendto(bytes(self.rValue, 'utf-8'), addr)
                 self.rValue = None
             #
         self.server_socket.close()
@@ -46,15 +48,17 @@ class Make_server(threading.Thread):
         rg = re.compile(re1+re2, re.IGNORECASE | re.DOTALL)
         m = rg.search(self.recv_data)
         if m:
-            to_call = {'f': "self.f_number", 'F': "self.f_number", 'd': "self.d_number", 'D': "self.d_number"}
-            to_call[m.group(1)](m.group(2))
+            if m.group(1).lower() == 'f':
+                self.f_number(int(m.group(2)))
+            else:
+                self.d_number(int(m.group(2)))
 
         else:
 #            regular expression from http://docutils.sourceforge.net/docutils/utils/roman.py
             re1 = '(m)'
             re2 = 'M{0,4}'              # thousands - 0 to 4 M's
             re3 = '(CM|CD|D?C{0,3})'    # hundreds - 900 (CM), 400 (CD), 0-300 (0 to 3 C's),
-                                        #     or 500-800 (D, followed by 0 to 3 C's)
+                                        # or 500-800 (D, followed by 0 to 3 C's)
             re4 = '(XC|XL|L?X{0,3})'    # tens - 90 (XC), 40 (XL), 0-30 (0 to 3 X's),
                                         #     or 50-80 (L, followed by 0 to 3 X's)
             re5 = '(IX|IV|V?I{0,3})'    # ones - 9 (IX), 4 (IV), 0-3 (0 to 3 I's),
@@ -69,11 +73,15 @@ class Make_server(threading.Thread):
     def f_number(self, number):
 # given a decimal n 0 -300 return the nth fibonacci number in hex
         if number >= 0 and number <= 300:
-            self.rValue = ((1+sqrt(5))**number-(1-sqrt(5))**number)/(2**number*sqrt(5))
+            cur, count, prev = 0, 0, 1
+            while count < number:
+                prev, cur = cur, cur + prev
+                count += 1
+            self.rValue = cur
 #               it's math -- sometimes its ugly
 
     def d_number(self, number):
-        #given a decimal number 0 - 10^30 (inclusive) return number in hex
+        #given a decimal number 0 - 10^30 ( inclusive ) return number in hex
         if number >=0 and number <=10**30:
             self.rValue = number
 
@@ -123,9 +131,9 @@ def main():
         serv2.stop()
         serv3.stop()
 
-    # make three threads as servers  
+    # make three threads as servers
         # ports UID, UID + 1000, UID + 2000
-    # listen for user input -- if quit -- interrupt threads set quit flag and join 
+    # listen for user input -- if quit -- interrupt threads set quit flag and join
 
 if __name__ == '__main__':
     main()
