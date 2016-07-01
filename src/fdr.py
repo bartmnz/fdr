@@ -19,7 +19,9 @@ class Make_server(threading.Thread):
         self.__server_socket.bind(self.__address)
         self.__server_socket.setblocking(False)
         self.__rValue = None
+        self.__bad_input = False
         self.__recv_data = None
+        self.__addr = None
         self.__quit_flag = threading.Event()
         self.daemon = True
 
@@ -29,21 +31,26 @@ class Make_server(threading.Thread):
     def run(self):
         while(not self.__quit_flag.is_set()):
             try:
-                self.__recv_data, addr = self.__server_socket.recvfrom(256)
+                self.__recv_data, self.__addr = \
+                    self.__server_socket.recvfrom(256)
                 self.__recv_data = str(self.__recv_data, 'utf-8')
     #            TODO if recv_data is a valid string -- do whatever
                 self.parse_input()
                 if self.__rValue:
                     self.__rValue = str(hex(self.__rValue))
                     self.__server_socket.sendto(
-                        bytes(self.__rValue + '\0', 'utf-8'), addr)
+                        bytes(self.__rValue + '\0', 'utf-8'), self.__addr)
                     self.__rValue = None
+                if self.__bad_input:
+                    self.__server_socket.sendto(
+                        bytes("Bad Input", 'utf-8'), self.__addr)
+                    self.__bad_input = False
             except BlockingIOError:
                 """ no data yet """
         self.__server_socket.close()
 
     def parse_input(self):
-        re1 = '([f,d])'    # f or d
+        re1 = '(^[f,d])'    # f or d
         re2 = '(\\d+)'    # Integer Number 1
 
         rg = re.compile(re1+re2, re.IGNORECASE | re.DOTALL)
@@ -55,7 +62,7 @@ class Make_server(threading.Thread):
                 self.d_number(int(m.group(2)))
 
         else:  # http://docutils.sourceforge.net/docutils/utils/roman.py
-            re1 = '(r)'
+            re1 = '(^r)'
             re2 = '(M{0,4})'            # thousands - 0 to 4 M's
             re3 = '(CM|CD|D?C{0,3})'    # hundreds- 900 (CM) 400 (CD) 0-300 etc
             re4 = '(XC|XL|L?X{0,3})'    # tens - 90 (XC), 40 (XL), 0-30 etc
@@ -66,6 +73,8 @@ class Make_server(threading.Thread):
             m = rg.search(self.__recv_data)
             if m:
                 self.r_number(m.group(2)+m.group(3)+m.group(4)+m.group(5))
+            else:
+                self.__bad_input = True
         # else i don't care because its not a valid input
 
 # given a decimal n 0 -300 return the nth Fibonacci number in hex
@@ -76,12 +85,16 @@ class Make_server(threading.Thread):
                 prev, cur = cur, cur + prev
                 count += 1
             self.__rValue = cur
+        else:
+                self.__bad_input = True
 #               it's math -- sometimes its ugly
 
 # given a decimal number 0 - 10^30 ( inclusive ) return number in hex
     def d_number(self, number):
         if number >= 0 and number <= 10**30:
             self.__rValue = number
+        else:
+                self.__bad_input = True
 
 # given a Roman numeral between I and MMMM (inclusive) return number in hex
     def r_number(self, number):
