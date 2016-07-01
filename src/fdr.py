@@ -57,9 +57,9 @@ class Make_server(threading.Thread):
         else:  # http://docutils.sourceforge.net/docutils/utils/roman.py
             re1 = '(r)'
             re2 = '(M{0,4})'            # thousands - 0 to 4 M's
-            re3 = '(CM|CD|D?C{0,4})'    # hundreds- 900 (CM) 400 (CD) 0-300 etc
-            re4 = '(XC|XL|L?X{0,4})'    # tens - 90 (XC), 40 (XL), 0-30 etc
-            re5 = '(IX|IV|V?I{0,4})'    # ones - 9 (IX), 4 (IV), 0-3 etc
+            re3 = '(CM|CD|D?C{0,3})'    # hundreds- 900 (CM) 400 (CD) 0-300 etc
+            re4 = '(XC|XL|L?X{0,3})'    # tens - 90 (XC), 40 (XL), 0-30 etc
+            re5 = '(IX|IV|V?I{0,3})'    # ones - 9 (IX), 4 (IV), 0-3 etc
 #            this will give different results than Liam wants because he does
 #            Roman numerals wrong.
             rg = re.compile(re1+re2+re3+re4+re5, re.IGNORECASE | re.DOTALL)
