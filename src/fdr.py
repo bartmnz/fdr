@@ -36,7 +36,7 @@ class Make_server(threading.Thread):
             self.parse_input()
             if self.rValue:
                 self.rValue = str(hex(self.rValue))
-                self.server_socket.sendto(bytes(self.rValue, 'utf-8'), addr)
+                self.server_socket.sendto(bytes(self.rValue + '\0', 'utf-8'), addr)
                 self.rValue = None
             #
         self.server_socket.close()
@@ -55,19 +55,21 @@ class Make_server(threading.Thread):
 
         else:
 #            regular expression from http://docutils.sourceforge.net/docutils/utils/roman.py
-            re1 = '(m)'
-            re2 = 'M{0,4}'              # thousands - 0 to 4 M's
-            re3 = '(CM|CD|D?C{0,3})'    # hundreds - 900 (CM), 400 (CD), 0-300 (0 to 3 C's),
+            re1 = '(r)'
+            re2 = '(M{0,4})'              # thousands - 0 to 4 M's
+            re3 = '(CM|CD|D?C{0,4})'    # hundreds - 900 (CM), 400 (CD), 0-300 (0 to 3 C's),
                                         # or 500-800 (D, followed by 0 to 3 C's)
-            re4 = '(XC|XL|L?X{0,3})'    # tens - 90 (XC), 40 (XL), 0-30 (0 to 3 X's),
+            re4 = '(XC|XL|L?X{0,4})'    # tens - 90 (XC), 40 (XL), 0-30 (0 to 3 X's),
                                         #     or 50-80 (L, followed by 0 to 3 X's)
-            re5 = '(IX|IV|V?I{0,3})'    # ones - 9 (IX), 4 (IV), 0-3 (0 to 3 I's),
+            re5 = '(IX|IV|V?I{0,4})'    # ones - 9 (IX), 4 (IV), 0-3 (0 to 3 I's),
                                         #     or 5-8 (V, followed by 0 to 3 I's)
-
+#            this will give different results than Liam wants because he does
+#            roman numerals wrong.
             rg = re.compile(re1+re2+re3+re4+re5, re.IGNORECASE | re.DOTALL)
             m = rg.search(self.recv_data)
             if m:
-                self.r_number(m.group(2))
+                
+                self.r_number(m.group(2)+m.group(3)+m.group(4)+m.group(5))
         # else i don't care because its not a valid input
 
     def f_number(self, number):
