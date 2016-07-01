@@ -51,7 +51,7 @@ class Make_server(threading.Thread):
 
     def parse_input(self):
         re1 = '(^[f,d])'    # f or d
-        re2 = '(\\d+)'    # Integer Number 1
+        re2 = '(\\d+$)'    # Integer Number 1
 
         rg = re.compile(re1+re2, re.IGNORECASE | re.DOTALL)
         m = rg.search(self.__recv_data)
@@ -66,7 +66,7 @@ class Make_server(threading.Thread):
             re2 = '(M{0,4})'            # thousands - 0 to 4 M's
             re3 = '(CM|CD|D?C{0,3})'    # hundreds- 900 (CM) 400 (CD) 0-300 etc
             re4 = '(XC|XL|L?X{0,3})'    # tens - 90 (XC), 40 (XL), 0-30 etc
-            re5 = '(IX|IV|V?I{0,3})'    # ones - 9 (IX), 4 (IV), 0-3 etc
+            re5 = '(IX|IV|V?I{0,3}$)'    # ones - 9 (IX), 4 (IV), 0-3 etc
 #            this will give different results than Liam wants because he does
 #            Roman numerals wrong.
             rg = re.compile(re1+re2+re3+re4+re5, re.IGNORECASE | re.DOTALL)
