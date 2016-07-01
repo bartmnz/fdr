@@ -85,27 +85,27 @@ class Make_server(threading.Thread):
         if number >=0 and number <=10**30:
             self.rValue = number
 
-    def r_number(self):
+    def r_number(self, number):
         #given a roman numeral between I and MMMM (inclusive) return number in hex
         # shamelessly taken from http://docutils.sourceforge.net/docutils/utils/roman.py
-        romanNumeralMap = (('M',  1000),
-                           ('CM', 900),
-                           ('D',  500),
-                           ('CD', 400),
-                           ('C',  100),
-                           ('XC', 90),
-                           ('L',  50),
-                           ('XL', 40),
-                           ('X',  10),
-                           ('IX', 9),
-                           ('V',  5),
-                           ('IV', 4),
-                           ('I',  1))
+        romanNumeralMap = (('M',  1000), ('m', 1000),
+                           ('CM', 900), ('cm', 900),
+                           ('D',  500), ('d', 500),
+                           ('CD', 400), ('cd', 400),
+                           ('C',  100), ('c', 100),
+                           ('XC', 90),  ('xc', 90),
+                           ('L',  50),  ('l', 50),
+                           ('XL', 40),  ('xl', 40),
+                           ('X',  10),  ('x', 10),
+                           ('IX', 9),   ('ix', 9),
+                           ('V',  5),   ('v', 5),
+                           ('IV', 4),   ('iv', 4),
+                           ('I',  1),   ('i', 1)) 
 
         result = 0
         index = 0
         for numeral, integer in romanNumeralMap:
-            while s[index:index+len(numeral)] == numeral:
+            while number[index:index+len(numeral)] == numeral:
                 result += integer
                 index += len(numeral)
         self.rValue = result
