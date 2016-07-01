@@ -113,7 +113,6 @@ class Make_server(threading.Thread):
 def main():
 
     UID = pwd.getpwuid(os.getuid()).pw_uid
-    print("UID is ", UID)
 
     serv1 = Make_server(UID)
     serv2 = Make_server(UID + 1000)
@@ -123,7 +122,9 @@ def main():
     serv2.start()
     serv3.start()
 
-    stop = input("Server running <quit> for QUIT")
+    print("Server running on ports", UID, UID + 1000, UID + 2000)
+    stop = input("<quit> for QUIT")
+
     if stop == 'quit':
         serv1.stop()
         serv2.stop()
@@ -131,9 +132,6 @@ def main():
         serv1.join(timeout=1)
         serv2.join(timeout=1)
         serv3.join(timeout=1)
-    # make three threads as servers
-        # ports UID, UID + 1000, UID + 2000
-    # listen for user input -- if quit -- interrupt threads set quit flag
 
 if __name__ == '__main__':
     main()
