@@ -5,10 +5,6 @@ Created on Jun 30, 2016
 @author: sbartholomew
 '''
 from socket import*
-import sys
-import select
-from _socket import AF_INET
-from cmath import sqrt
 import os
 import pwd
 import threading
@@ -39,7 +35,8 @@ class Make_server(threading.Thread):
                 self.parse_input()
                 if self.__rValue:
                     self.__rValue = str(hex(self.__rValue))
-                    self.__server_socket.sendto(bytes(self.__rValue + '\0', 'utf-8'), addr)
+                    self.__server_socket.sendto(
+                        bytes(self.__rValue + '\0', 'utf-8'), addr)
                     self.__rValue = None
             except BlockingIOError:
                 """ no data yet """
@@ -57,26 +54,22 @@ class Make_server(threading.Thread):
             else:
                 self.d_number(int(m.group(2)))
 
-        else:
-#            regular expression from http://docutils.sourceforge.net/docutils/utils/roman.py
+        else:  # http://docutils.sourceforge.net/docutils/utils/roman.py
             re1 = '(r)'
-            re2 = '(M{0,4})'              # thousands - 0 to 4 M's
-            re3 = '(CM|CD|D?C{0,4})'    # hundreds - 900 (CM), 400 (CD), 0-300 (0 to 3 C's),
-                                        # or 500-800 (D, followed by 0 to 3 C's)
-            re4 = '(XC|XL|L?X{0,4})'    # tens - 90 (XC), 40 (XL), 0-30 (0 to 3 X's),
-                                        #     or 50-80 (L, followed by 0 to 3 X's)
-            re5 = '(IX|IV|V?I{0,4})'    # ones - 9 (IX), 4 (IV), 0-3 (0 to 3 I's),
-                                        #     or 5-8 (V, followed by 0 to 3 I's)
+            re2 = '(M{0,4})'            # thousands - 0 to 4 M's
+            re3 = '(CM|CD|D?C{0,4})'    # hundreds- 900 (CM) 400 (CD) 0-300 etc
+            re4 = '(XC|XL|L?X{0,4})'    # tens - 90 (XC), 40 (XL), 0-30 etc
+            re5 = '(IX|IV|V?I{0,4})'    # ones - 9 (IX), 4 (IV), 0-3 etc
 #            this will give different results than Liam wants because he does
-#            roman numerals wrong.
+#            Roman numerals wrong.
             rg = re.compile(re1+re2+re3+re4+re5, re.IGNORECASE | re.DOTALL)
             m = rg.search(self.__recv_data)
             if m:
                 self.r_number(m.group(2)+m.group(3)+m.group(4)+m.group(5))
         # else i don't care because its not a valid input
 
+# given a decimal n 0 -300 return the nth Fibonacci number in hex
     def f_number(self, number):
-# given a decimal n 0 -300 return the nth fibonacci number in hex
         if number >= 0 and number <= 300:
             cur, count, prev = 0, 0, 1
             while count < number:
@@ -85,14 +78,15 @@ class Make_server(threading.Thread):
             self.__rValue = cur
 #               it's math -- sometimes its ugly
 
+# given a decimal number 0 - 10^30 ( inclusive ) return number in hex
     def d_number(self, number):
-        #given a decimal number 0 - 10^30 ( inclusive ) return number in hex
         if number >= 0 and number <= 10**30:
             self.__rValue = number
 
+# given a Roman numeral between I and MMMM (inclusive) return number in hex
     def r_number(self, number):
-        #given a roman numeral between I and MMMM (inclusive) return number in hex
-        # shamelessly taken from http://docutils.sourceforge.net/docutils/utils/roman.py
+
+        # from http://docutils.sourceforge.net/docutils/utils/roman.py
         romanNumeralMap = (('M',  1000), ('m', 1000),
                            ('CM', 900), ('cm', 900),
                            ('D',  500), ('d', 500),
@@ -105,7 +99,7 @@ class Make_server(threading.Thread):
                            ('IX', 9),   ('ix', 9),
                            ('V',  5),   ('v', 5),
                            ('IV', 4),   ('iv', 4),
-                           ('I',  1),   ('i', 1)) 
+                           ('I',  1),   ('i', 1))
 
         result = 0
         index = 0
@@ -117,7 +111,6 @@ class Make_server(threading.Thread):
 
 
 def main():
-#get UID
 
     UID = pwd.getpwuid(os.getuid()).pw_uid
     print("UID is ", UID)
@@ -140,7 +133,7 @@ def main():
         serv3.join(timeout=1)
     # make three threads as servers
         # ports UID, UID + 1000, UID + 2000
-    # listen for user input -- if quit -- interrupt threads set quit flag and join
+    # listen for user input -- if quit -- interrupt threads set quit flag
 
 if __name__ == '__main__':
     main()
