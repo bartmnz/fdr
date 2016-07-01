@@ -18,35 +18,39 @@ import re
 class Make_server(threading.Thread):
     def __init__(self, port):
         threading.Thread.__init__(self)
-        self.address = ('localhost', port)
-        self.server_socket = socket(AF_INET, SOCK_DGRAM)
-        self.server_socket.bind(self.address)
-        self.rValue = None
-        self.recv_data = None
-        self.quit_flag = False
+        self.__address = ('localhost', port)
+        self.__server_socket = socket(AF_INET, SOCK_DGRAM)
+        self.__server_socket.bind(self.__address)
+        self.__server_socket.setblocking(False)
+        self.__rValue = None
+        self.__recv_data = None
+        self.__quit_flag = threading.Event()
+        self.daemon = True
 
     def stop(self):
-        self.quit_flag = True
+        self.__quit_flag.set()
 
     def run(self):
-        while(not self.quit_flag):
-            self.recv_data, addr = self.server_socket.recvfrom(256)
-            self.recv_data = str(self.recv_data, 'utf-8')
-#            TODO if recv_data is a valid string -- do whatever
-            self.parse_input()
-            if self.rValue:
-                self.rValue = str(hex(self.rValue))
-                self.server_socket.sendto(bytes(self.rValue + '\0', 'utf-8'), addr)
-                self.rValue = None
-            #
-        self.server_socket.close()
+        while(not self.__quit_flag.is_set()):
+            try:
+                self.__recv_data, addr = self.__server_socket.recvfrom(256)
+                self.__recv_data = str(self.__recv_data, 'utf-8')
+    #            TODO if recv_data is a valid string -- do whatever
+                self.parse_input()
+                if self.__rValue:
+                    self.__rValue = str(hex(self.__rValue))
+                    self.__server_socket.sendto(bytes(self.__rValue + '\0', 'utf-8'), addr)
+                    self.__rValue = None
+            except BlockingIOError:
+                """ no data yet """
+        self.__server_socket.close()
 
     def parse_input(self):
         re1 = '([f,d])'    # f or d
         re2 = '(\\d+)'    # Integer Number 1
 
         rg = re.compile(re1+re2, re.IGNORECASE | re.DOTALL)
-        m = rg.search(self.recv_data)
+        m = rg.search(self.__recv_data)
         if m:
             if m.group(1).lower() == 'f':
                 self.f_number(int(m.group(2)))
@@ -66,9 +70,8 @@ class Make_server(threading.Thread):
 #            this will give different results than Liam wants because he does
 #            roman numerals wrong.
             rg = re.compile(re1+re2+re3+re4+re5, re.IGNORECASE | re.DOTALL)
-            m = rg.search(self.recv_data)
+            m = rg.search(self.__recv_data)
             if m:
-                
                 self.r_number(m.group(2)+m.group(3)+m.group(4)+m.group(5))
         # else i don't care because its not a valid input
 
@@ -79,13 +82,13 @@ class Make_server(threading.Thread):
             while count < number:
                 prev, cur = cur, cur + prev
                 count += 1
-            self.rValue = cur
+            self.__rValue = cur
 #               it's math -- sometimes its ugly
 
     def d_number(self, number):
         #given a decimal number 0 - 10^30 ( inclusive ) return number in hex
-        if number >=0 and number <=10**30:
-            self.rValue = number
+        if number >= 0 and number <= 10**30:
+            self.__rValue = number
 
     def r_number(self, number):
         #given a roman numeral between I and MMMM (inclusive) return number in hex
@@ -110,7 +113,7 @@ class Make_server(threading.Thread):
             while number[index:index+len(numeral)] == numeral:
                 result += integer
                 index += len(numeral)
-        self.rValue = result
+        self.__rValue = result
 
 
 def main():
@@ -132,7 +135,9 @@ def main():
         serv1.stop()
         serv2.stop()
         serv3.stop()
-
+        serv1.join(timeout=1)
+        serv2.join(timeout=1)
+        serv3.join(timeout=1)
     # make three threads as servers
         # ports UID, UID + 1000, UID + 2000
     # listen for user input -- if quit -- interrupt threads set quit flag and join
